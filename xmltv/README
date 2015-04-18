@@ -1,0 +1,8 @@
+
+#
+# this is a work-in-progress version of tv_imdb that uses IMDB::Local
+# 
+
+To use run:
+   perl -Ilib -I../blib/lib -I<xmltvdir>/blib/lib filter/tv_imdb  --imdb <imdbdir>
+

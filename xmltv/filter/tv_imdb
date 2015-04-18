@@ -1,0 +1,329 @@
+#!/usr/bin/perl -w
+
+use strict;
+use XMLTV::Version '$Id: tv_imdb,v 1.34 2015/03/11 03:33:09 jveldhuis Exp $ ';
+use Data::Dumper;
+use Getopt::Long;
+
+use XMLTV;
+use XMLTV::Data::Recursive::Encode;
+use XMLTV::Usage <<END
+$0: augment listings with data from imdb.com
+$0 --imdbdir <dir> [--help] [--quiet] [--download] [--prepStage (1-9,all)]
+$0 --imdbdir <dir> [--help] [--quiet] [--download] [--with-keywords] [--with-plot] [--movies-only] [--actors NUMBER] [--stats] [--debug] [--output FILE] [FILE...]
+
+END
+;
+
+use XMLTV::IMDB;
+use IMDB::Local;
+
+my ($opt_help,
+    $opt_output,
+    $opt_prepStage,
+    $opt_imdbDir,
+    $opt_quiet,
+    $opt_download,
+    $opt_stats,
+    $opt_debug,
+    $opt_movies_only,
+    $opt_with_keywords,
+    $opt_with_plot,
+    $opt_num_actors,
+    $opt_validate_title,
+    $opt_validate_year
+    );
+
+GetOptions('help'             => \$opt_help,
+	   'output=s'         => \$opt_output,
+	   'prepStage=s'      => \$opt_prepStage,
+	   'imdbdir=s'        => \$opt_imdbDir,
+	   'with-keywords'    => \$opt_with_keywords,
+	   'with-plot'        => \$opt_with_plot,
+	   'movies-only'      => \$opt_movies_only,
+	   'actors=s'         => \$opt_num_actors,
+	   'quiet'            => \$opt_quiet,
+	   'download'         => \$opt_download,
+	   'stats'            => \$opt_stats,
+	   'debug+'           => \$opt_debug,
+	   'validate-title=s' => \$opt_validate_title,
+	   'validate-year=s'  => \$opt_validate_year,
+    ) or usage(0);
+
+usage(1) if ( $opt_help );
+usage(1) if ( not defined($opt_imdbDir) );
+
+$opt_with_keywords=0 if ( !defined($opt_with_keywords) );
+$opt_with_plot=0     if ( !defined($opt_with_plot) );
+$opt_num_actors=3    if ( !defined($opt_num_actors) );
+$opt_movies_only=0   if ( !defined($opt_movies_only) );
+$opt_debug=0         if ( !defined($opt_debug) );
+$opt_quiet=(defined($opt_quiet));
+
+if ( !defined($opt_stats) ) {
+    $opt_stats=!$opt_quiet;
+}
+else {
+    $opt_stats=(defined($opt_stats));
+}
+$opt_debug=0  if $opt_quiet;
+
+my $listsDir="$opt_imdbDir/lists";
+
+if ( $opt_download ) {
+    use IMDB::Local::Download;
+    
+    if ( ! -d $listsDir ) {
+	mkdir($listsDir, 0777) or die "cannot mkdir $listsDir: $!";
+    }
+    
+    my $n=new IMDB::Local::Download('listsDir' => $listsDir,
+				    'verbose' => !$opt_quiet);
+    if ( !$opt_with_keywords ) {
+	$n->keywords(0);
+    }
+    if ( !$opt_with_plot ) {
+	$n->plots(0);
+    }
+    $n->download();
+}
+
+
+sub crunchStage($$)
+{
+    my ($n, $stage)=@_;
+
+    my $CRUNCH_STAGES_COUNT = scalar($n->listTypes());
+
+    # are we in the last stage ?
+    if ( $stage-1 == $CRUNCH_STAGES_COUNT ) {
+	my $st=0;
+
+	# check all the pre-requisite stages have been run
+	for my $type ( $n->listTypes() ) {
+	    if ( !$n->importListComplete($type) ) {
+		#$n->error("prep stages must be run in sequence..");
+		$n->error("prepStage $type either has never been run or failed");
+		if ( ! defined($n->{listFiles}->paths_index($type)) ) {
+                    $n->error("data for this stage will NOT be added");
+                } else {
+		    $n->error("rerun tv_imdb with --prepStage=$st");
+		    return(1);
+		}
+	    }
+	    $st++;
+        }
+	if ( $n->checkSantity() == 0 ) {
+	    # all good
+	}
+    }
+
+    if ( $stage-1 < 0 || $stage-1 > $CRUNCH_STAGES_COUNT ) {
+	return(-1);
+    }
+
+    my @list=$n->listTypes();
+
+    my $type=$list[$stage-1];
+
+    $n->status("importing $type list for stage $stage..");
+
+    my $ret=$n->importList($type);
+    if ( $ret == 0 ) {
+	if ( $n->{errorCountInLog} == 0 ) {
+	    $n->status("prep stage $stage succeeded with no errors");
+	}
+	else {
+	    $n->status("prep stage $stage succeeded with $n->{errorCountInLog} errors in $n->{imdbDir}/stage-$type.log");
+	    if ( $stage-1 == $CRUNCH_STAGES_COUNT && $n->{errorCountInLog} > 30 && $n->{errorCountInLog} < 80 ) {
+		$n->status("this stage commonly produces around 60 (or so) warnings because of imdb");
+		$n->status("list file inconsistancies, they can usually be safely ignored");
+	    }
+	}
+    }
+    else {
+	if ( $n->{errorCountInLog} == 0 ) {
+	    $n->status("prep stage $stage failed (with no logged errors)");
+	}
+	else {
+	    $n->status("prep stage $stage failed with $n->{errorCountInLog} errors in $n->{imdbDir}/stage-$type.log");
+	}
+    }
+    return($ret);
+}
+    
+if ( defined($opt_prepStage) ) {
+    
+    my %options = ('imdbDir'         => $opt_imdbDir,
+		   'listsDir'        => $listsDir,
+		   'verbose'         => !$opt_quiet,
+		   'showProgressBar' => !$opt_quiet);
+
+    my $n=new IMDB::Local(%options);
+    if ( !$n ) {
+	exit(1);
+    }
+    
+    if ( $opt_prepStage eq "all" ) {
+
+	for (my $stage=1; $stage <= scalar($n->listTypes()) ; $stage++) {
+	    my $ret=crunchStage($n, $stage);
+	    if ( $ret != 0 ) {
+		exit($ret);
+	    }
+	}
+	print STDERR "database load complete, let the games begin !\n" if ( !$opt_quiet);
+	exit(0);
+    }
+    else {
+	my $ret=crunchStage($n, int($opt_prepStage));
+
+	if ( $ret == 0 && int($opt_prepStage) == scalar($n->listTypes()) ) {
+	    print STDERR "database load complete, let the games begin !\n" if ( !$opt_quiet);
+	}
+	exit($ret);
+    }
+}
+
+my $imdb=new XMLTV::IMDB('imdbDir'         => $opt_imdbDir,
+			 'verbose'         => $opt_debug,
+			 'cacheLookups'    => 1,
+			 'cacheLookupSize' => 1000,
+			 'updateKeywords'  => $opt_with_keywords,
+			 'updatePlot'      => $opt_with_plot,
+			 'numActors'       => $opt_num_actors,
+			 );
+
+#$imdb->{verbose}++;
+
+#if ( my $errline=$imdb->sanityCheckDatabase() ) {
+#    print STDERR "$errline";
+#    print STDERR "tv_imdb: you need to use --prepStage to rebuild\n";
+#    exit(1);
+#}
+
+if ( !$imdb->openMovieIndex() ) {
+    print STDERR "tv_imdb: open database failed\n";
+    exit(1);
+}
+
+if ( defined($opt_validate_title) != defined($opt_validate_year) ) {
+    print STDERR "tv_imdb: both --validate-title and --validate-year must be used together\n";
+    exit(1);
+}
+
+if ( defined($opt_validate_title) && defined($opt_validate_year)  ) {
+    my $prog;
+
+    $prog->{title}->[0]->[0]=$opt_validate_title;
+    $prog->{date}=$opt_validate_year;
+    $imdb->{updateTitles}=0;
+
+    #print Dumper($prog);
+    my $n=$imdb->augmentProgram($prog, $opt_movies_only);
+    if ( $n ) {
+	$Data::Dumper::Sortkeys = 1; # ensure consistent order of dumped hash
+	#my $encoding;
+	#my $w = new XMLTV::Writer((), encoding => $encoding);
+	#$w->start(shift);
+	#$w->write_programme($n);
+	print Dumper($n);
+	#$w->end();
+    }
+    $imdb->closeMovieIndex();
+    exit(0);
+}
+
+# test that movie database works okay
+my %w_args = ();
+if (defined $opt_output) {
+    my $fh = new IO::File ">$opt_output";
+    die "cannot write to $opt_output\n" if not $fh;
+    %w_args = (OUTPUT => $fh);
+}
+
+my $numberOfSeenChannels=0;
+
+my $w;
+my $encoding;   # store encoding of input file
+
+sub encoding_cb( $ ) {
+    die if defined $w;
+    $encoding = shift;    # callback returns the file's encoding
+    $w = new XMLTV::Writer(%w_args, encoding => $encoding);
+}
+
+sub credits_cb( $ ) {
+    $w->start(shift);
+}
+
+my %seen_ch;
+sub channel_cb( $ ) {
+    my $c = shift;
+    my $id = $c->{id};
+    $Data::Dumper::Sortkeys = 1; # ensure consistent order of dumped hash
+    if (not defined $seen_ch{$id}) {
+	$w->write_channel($c);
+	$seen_ch{$id} = $c;
+	$numberOfSeenChannels++;
+    }
+    elsif (Dumper($seen_ch{$id}) eq Dumper($c)) {
+	# They're identical, okay.
+    }
+    else {
+	warn "channel $id may differ between two files, "
+	  . "picking one arbitrarily\n";
+    }
+}
+
+sub programme_cb( $ ) {
+    my $prog=shift;
+    
+    # The database made by IMDB.pm is read as iso-8859-1. The xml file may be different (e.g. utf-8).
+    # IMDB::augmentProgram does not re-encode the data it adds, so the output file has invalid characters (bug #440).
+   
+    my $orig_prog;
+    if (lc($encoding) ne 'iso-8859-1') {
+      # decode the incoming programme
+      $orig_prog = $prog;
+      $prog = XMLTV::Data::Recursive::Encode->decode($encoding, $prog);
+    }
+    else {
+      $orig_prog = $prog;
+    }
+    
+    # augmentProgram will now add imdb data as iso-8859-1 
+    my $nprog=$imdb->augmentProgram($prog, $opt_movies_only);
+    if ( $nprog ) {
+      if (lc($encoding) ne 'iso-8859-1') {
+        # re-code the modified programme back to original encoding
+        $nprog = XMLTV::Data::Recursive::Encode->encode($encoding, $nprog);
+      }
+	$prog=$nprog;
+    }
+    else {
+        $prog = $orig_prog;
+    }
+
+    # we only add movie information to programmes
+    # that have a 'date' element defined (since we need
+    # a year to work with when verifing we got the correct
+    # hit in the imdb data)
+    $w->write_programme($prog);
+}
+
+@ARGV = ('-') if not @ARGV;
+
+XMLTV::parsefiles_callback(\&encoding_cb, \&credits_cb,
+			   \&channel_cb, \&programme_cb,
+			   @ARGV);
+# we only get a Writer if the encoding callback gets called
+if ( $w ) {
+    $w->end();
+}
+
+if ( $opt_stats ) {
+    print STDERR $imdb->getStatsLines($numberOfSeenChannels);
+}
+$imdb->closeMovieIndex();
+exit(0);

@@ -7,11 +7,14 @@ use IMDB::Local;
 use IMDB::Local::Title;
 use IMDB::Local::QualifierType ':types';
 
-my ($opt_help,
-    $opt_imdbDir,
-    $opt_import,
-    $opt_quiet,
-    $opt_download);
+use Cwd;
+
+my $opt_help;
+my $opt_imdbDir=getcwd();
+
+my $opt_import;
+my $opt_quiet=0;
+my $opt_force=0;
 my $opt_title;
 my $opt_format='csv';
 

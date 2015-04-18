@@ -5,8 +5,10 @@ use Getopt::Long;
 
 use IMDB::Local;
 
+use Cwd;
+
 my $opt_help;
-my $opt_imdbDir;
+my $opt_imdbDir=getcwd();
 my $opt_import;
 my $opt_quiet=0;
 my $opt_force=0;
@@ -24,10 +26,6 @@ GetOptions('help'             => \$opt_help,
 
 if ( $opt_help ) {
     die "no usage implemented";
-}
-
-if ( ! defined($opt_imdbDir) ) {
-    die "imdbdir flag is required";
 }
 
 # lets put list files below the imdbDir

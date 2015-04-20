@@ -33,3 +33,5 @@ Revision history for IMDB-Local
 1.5      For tv epsiodes, set SearchTitle to encoded episode title
          Using constants for QualifierTypeIDs
          imdb-title.pl - now searches tv-series and movie titles separately
+
+1.6	 Minor bug fixes related to line#s in parse errors and when list files are empty

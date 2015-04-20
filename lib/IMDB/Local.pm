@@ -377,11 +377,13 @@ sub importMovies($$$$)
 	$lineCount++;
 	if ( m/^MOVIES LIST/o ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after 'MOVIES LIST' at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
+		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -508,11 +510,13 @@ sub importGenres($$$$)
 	$lineCount++;
 	if ( m/^8: THE GENRES LIST/o ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after 'THE GENRES LIST' at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
+		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -660,21 +664,25 @@ sub importActors($$$$)
 	$lineCount++;
 	if ( m/^$header/ ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after $header at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
+		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^Name\s+Titles\s*$/o ) {
+		$lineCount++;
 		$self->error("missing name/titles line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^[\s\-]+$/o ) {
+		$lineCount++;
 		$self->error("missing name/titles suffix line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -843,21 +851,25 @@ sub importDirectors($$$)
 	$lineCount++;
 	if ( m/^THE DIRECTORS LIST/ ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after THE DIRECTORS LIST at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
+		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^Name\s+Titles\s*$/o ) {
+		$lineCount++;
 		$self->error("missing name/titles line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^[\s\-]+$/o ) {
+		$lineCount++;
 		$self->error("missing name/titles suffix line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -979,11 +991,13 @@ sub importRatings($$)
 	$lineCount++;
 	if ( m/^MOVIE RATINGS REPORT/o ) {
 	    if ( !($_=<$fh>) || !m/^\s*$/o) {
+		$lineCount++;
 		$self->error("missing empty line after \"MOVIE RATINGS REPORT\" at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^New  Distribution  Votes  Rank  Title/o ) {
+		$lineCount++;
 		$self->error("missing \"New  Distribution  Votes  Rank  Title\" at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -1082,11 +1096,13 @@ sub importKeywords($$$$)
 
 	if ( m/THE KEYWORDS LIST/ ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after \"THE KEYWORDS LIST\" at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
+		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -1189,11 +1205,13 @@ sub importPlots($$$$)
 
 	if ( m/PLOT SUMMARIES LIST/ ) {
 	    if ( !($_=<$fh>) || !m/^===========/o ) {
+		$lineCount++;
 		$self->error("missing ======= after \"PLOT SUMMARIES LIST\" at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
 	    if ( !($_=<$fh>) || !m/^-----------/o ) {
+		$lineCount++;
 		$self->error("missing ------- line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
@@ -1516,6 +1534,7 @@ sub _importListFile($$$)
     my $dbinfoCalcBytesPerEntry = sub {
 	my ($self, $key, $calcActualForThisNumber)=@_;
 	my $fileSize=$self->dbinfoGetFileSize($key);
+	$calcActualForThisNumber=1 if ( $calcActualForThisNumber== 0);
 	return(int($fileSize/$calcActualForThisNumber));
     };
 

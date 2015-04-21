@@ -1,7 +1,7 @@
 #!/usr/bin/perl 
 
 #
-# perl -Iblib/lib script/test-export-listfiles.pl --imdb db --listsDir tmp/lists --file ../titles4testing.txt  && perl -Iblib/lib script/imdb-local.pl -imdb tmp --import all
+# perl -Iblib/lib script/imdb-export2listfiles.pl --imdb db --listsDir tmp/lists --file ../titles4testing.txt  && perl -Iblib/lib script/imdb-local.pl -imdb tmp --import all
 #
 use strict;
 use warnings;
@@ -217,10 +217,10 @@ if ( open(my $fd, "> $opt_listsDir/directors.list") ) {
 	    
 	    my $mkey=GetIMDBKey($t);
 	    if ( $c == 0 ) {
-		printf $fd "%-25s\t%s\n", $name, $mkey;
+		printf $fd "%s\t%s\n", $name, $mkey;
 	    }
 	    else {
-		printf $fd "%-25s\t%s\n", '', $mkey;
+		printf $fd "%s\t%s\n", '', $mkey;
 	    }
 	}
     }
@@ -267,10 +267,10 @@ if ( open(my $fd, "> $opt_listsDir/actors.list") ) {
 
 	    my $mkey=GetIMDBKey($t);
 	    if ( $c == 0 ) {
-		printf $fd "%-25s\t%s\n", $name, $mkey;
+		printf $fd "%s\t%s\n", $name, $mkey;
 	    }
 	    else {
-		printf $fd "%-25s\t%s\n", '', $mkey;
+		printf $fd "%s\t%s\n", '', $mkey;
 	    }
 	}
     }
@@ -298,5 +298,40 @@ if ( open(my $fd, "> $opt_listsDir/genres.list") ) {
     close($fd);
 }
 
+
+if ( open(my $fd, "> $opt_listsDir/ratings.list") ) {
+    print $fd "MOVIE RATINGS REPORT\n";
+    print $fd "\n";
+    print $fd "New  Distribution  Votes  Rank  Title\n";
+
+    for my $t (sort keys %found) {
+	my $title=$found{$t};
+
+	my $mkey=GetIMDBKey($title);
+
+	if ( my $g=$title->populateRating() ) {
+	    printf $fd "%17s %6d %4.1f %s\n", $g->Distribution, $g->Votes, $g->Rank, $mkey;
+	}
+    }
+
+    close($fd);
+}
+
+if ( open(my $fd, "> $opt_listsDir/keywords.list") ) {
+    print $fd "THE KEYWORDS LIST\n";
+    print $fd "=================\n\n";
+
+    for my $t (sort keys %found) {
+	my $title=$found{$t};
+
+	my $mkey=GetIMDBKey($title);
+
+	for my $k ($title->populateKeywords()) {
+	    printf $fd "%50s %s\n", $mkey, $k->Name;
+	}
+    }
+
+    close($fd);
+}
 
 exit(0);

@@ -382,12 +382,14 @@ sub importMovies($$$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
 		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 1000 ) {
@@ -515,12 +517,14 @@ sub importGenres($$$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
 		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 1000 ) {
@@ -669,24 +673,28 @@ sub importActors($$$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
 		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^Name\s+Titles\s*$/o ) {
 		$lineCount++;
 		$self->error("missing name/titles line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^[\s\-]+$/o ) {
 		$lineCount++;
 		$self->error("missing name/titles suffix line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 1000 ) {
@@ -856,24 +864,28 @@ sub importDirectors($$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
 		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^Name\s+Titles\s*$/o ) {
 		$lineCount++;
 		$self->error("missing name/titles line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^[\s\-]+$/o ) {
 		$lineCount++;
 		$self->error("missing name/titles suffix line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 1000 ) {
@@ -996,12 +1008,14 @@ sub importRatings($$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^New  Distribution  Votes  Rank  Title/o ) {
 		$lineCount++;
 		$self->error("missing \"New  Distribution  Votes  Rank  Title\" at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 1000 ) {
@@ -1101,12 +1115,14 @@ sub importKeywords($$$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^\s*$/o ) {
 		$lineCount++;
 		$self->error("missing empty line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 200000 ) {
@@ -1210,12 +1226,14 @@ sub importPlots($$$$)
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    if ( !($_=<$fh>) || !m/^-----------/o ) {
 		$lineCount++;
 		$self->error("missing ------- line after ======= at line $lineCount");
 		closeMaybeGunzip($file, $fh);
 		return(-1);
 	    }
+	    $lineCount++;
 	    last;
 	}
 	elsif ( $lineCount > 500 ) {

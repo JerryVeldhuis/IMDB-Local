@@ -287,6 +287,7 @@ sub populateKeywords($)
 	    $self->Keywords_push($r)
 	}
     }
+    return($self->Keywords);
 }
 
 sub populateAll($)
